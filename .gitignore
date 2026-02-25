@@ -1,0 +1,10 @@
+target/
+.idea/
+*.iml
+*.zip
+__MACOSX/
+.claude/
+*.class
+*.jar
+*.war
+.DS_Store
