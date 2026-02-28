@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
 <head>
     <meta charset="UTF-8">
@@ -7,150 +8,323 @@
     <title>Dashboard - Job Portal</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <style>
+        .stat-card {
+            border: none;
+            border-radius: 12px;
+            transition: transform 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+        .stat-card .card-body {
+            padding: 25px;
+        }
+        .stat-card .stat-icon {
+            font-size: 2.5rem;
+            opacity: 0.8;
+        }
+        .stat-card .stat-number {
+            font-size: 2.2rem;
+            font-weight: 700;
+        }
+        .stat-card .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .job-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .job-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        .job-card .card-body {
+            padding: 20px 25px;
+        }
+        .job-card .card-title {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #1565C0;
+            margin-bottom: 15px;
+        }
+        .job-card .job-info {
+            color: #555;
+            font-size: 0.92rem;
+            line-height: 2;
+        }
+        .job-card .job-info i {
+            width: 20px;
+            color: #F5A623;
+        }
+        .job-card .card-footer {
+            background: #fafafa;
+            border-top: 1px solid #eee;
+            padding: 12px 25px;
+        }
+        .job-card .badge-applicants {
+            font-size: 0.8rem;
+            padding: 5px 12px;
+            border-radius: 20px;
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .section-header h4 {
+            margin: 0;
+            font-weight: 600;
+            color: #1565C0;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border: 2px dashed #dee2e6;
+        }
+        .empty-state i {
+            font-size: 3rem;
+            color: #adb5bd;
+            margin-bottom: 15px;
+        }
+        .empty-state h5 {
+            color: #6c757d;
+        }
+        .empty-state p {
+            color: #adb5bd;
+        }
+    </style>
 </head>
 
 <body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" th:href="@{/}">
-                <i class="fas fa-briefcase"></i> Job Portal
-            </a>
-            <div class="collapse navbar-collapse">
-                <ul class="navbar-nav ml-auto">
-                    <li class="nav-item"><a class="nav-link" th:href="@{/dashboard}">Dashboard</a></li>
-                    <li class="nav-item"><a class="nav-link" th:href="@{/profile}">Profile</a></li>
-                    <li class="nav-item">
-                        <form th:action="@{/logout}" method="post" class="d-inline">
-                            <button type="submit" class="btn btn-link nav-link">Logout</button>
-                        </form>
-                    </li>
-                </ul>
+    <!-- Sidebar for Recruiter -->
+    <div sec:authorize="hasRole('RECRUITER')" th:replace="fragments/sidebar :: sidebar('dashboard')"></div>
+
+    <!-- Top navbar for Job Seeker -->
+    <div sec:authorize="hasRole('JOB_SEEKER')" th:replace="fragments/sidebar :: topbar('dashboard')"></div>
+
+    <!-- ==================== RECRUITER DASHBOARD ==================== -->
+    <div sec:authorize="hasRole('RECRUITER')" class="main-content">
+        <div class="container py-5">
+            <h2 class="mb-4">Dashboard</h2>
+
+            <!-- Stat Cards -->
+            <div class="row mb-4">
+                <div class="col-md-4 mb-3">
+                    <div class="card stat-card text-white bg-primary">
+                        <div class="card-body d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="stat-number" th:text="${totalUsers}">0</div>
+                                <div class="stat-label">Total Users</div>
+                            </div>
+                            <i class="fas fa-users stat-icon"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card stat-card text-white bg-success">
+                        <div class="card-body d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="stat-number" th:text="${totalJobs}">0</div>
+                                <div class="stat-label">Jobs Posted</div>
+                            </div>
+                            <i class="fas fa-briefcase stat-icon"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card stat-card text-white bg-warning">
+                        <div class="card-body d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="stat-number" th:text="${totalApplications}">0</div>
+                                <div class="stat-label">Seeker Applied</div>
+                            </div>
+                            <i class="fas fa-file-alt stat-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recently Applied Section -->
+            <div class="section-header mt-5">
+                <h4>Recently Applied</h4>
+            </div>
+
+            <div class="card">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Applicant</th>
+                                    <th>Job Title</th>
+                                    <th>Company</th>
+                                    <th>Applied Date</th>
+                                    <th>Resume / CV</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="app : ${recentApplications}">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mr-2" style="width: 36px; height: 36px; font-size: 0.85rem; font-weight: 600;">
+                                                <span th:text="${app.user?.firstName != null ? app.user.firstName.substring(0,1).toUpperCase() : 'U'}">U</span>
+                                            </div>
+                                            <div>
+                                                <div class="font-weight-bold" th:text="${(app.user?.firstName ?: '') + ' ' + (app.user?.lastName ?: '')}">Applicant</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td th:text="${app.job?.jobTitle}">Job Title</td>
+                                    <td th:text="${app.job?.jobCompany?.name}">Company</td>
+                                    <td>
+                                        <small class="text-muted" th:text="${app.applyDate != null ? #temporals.format(app.applyDate, 'MMM dd, yyyy HH:mm') : '-'}">Date</small>
+                                    </td>
+                                    <td>
+                                        <a th:if="${app.user?.resume != null and !app.user.resume.isEmpty()}"
+                                           th:href="${app.user.resume}" target="_blank" class="btn btn-sm btn-outline-success">
+                                            <i class="fas fa-file-pdf"></i> View CV
+                                        </a>
+                                        <span th:if="${app.user?.resume == null or app.user.resume.isEmpty()}" class="text-muted">
+                                            <i class="fas fa-times-circle"></i> No CV
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a th:href="@{/jobs/{id}(id=${app.job?.jobPostId})}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(recentApplications)}">
+                                    <td colspan="6" class="text-center py-4 text-muted">No recent applications.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
-    </nav>
 
-    <div class="container py-5">
-        <h2 class="mb-4">Dashboard</h2>
+        <footer class="bg-dark text-white py-4 text-center">
+            <p>&copy; 2023 Job Portal. All rights reserved.</p>
+        </footer>
+    </div>
 
-        <!-- For Job Seeker -->
-        <div th:if="${isJobSeeker}">
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="card text-white bg-primary mb-3">
-                        <div class="card-body">
-                            <h5 class="card-title"><i class="fas fa-briefcase"></i> Applied Jobs</h5>
-                            <p class="card-text display-4" th:text="${appliedJobsCount}">0</p>
+    <!-- ==================== JOB SEEKER DASHBOARD ==================== -->
+    <div sec:authorize="hasRole('JOB_SEEKER')" class="page-wrapper">
+        <div class="container py-5">
+            <h2 class="mb-4">Dashboard</h2>
+
+            <!-- Stat Cards -->
+            <div class="row mb-4">
+                <div class="col-md-4 mb-3">
+                    <div class="card stat-card text-white bg-primary">
+                        <div class="card-body d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="stat-number" th:text="${appliedJobsCount}">0</div>
+                                <div class="stat-label">Applied Jobs</div>
+                            </div>
+                            <i class="fas fa-briefcase stat-icon"></i>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="card text-white bg-success mb-3">
-                        <div class="card-body">
-                            <h5 class="card-title"><i class="fas fa-bookmark"></i> Saved Jobs</h5>
-                            <p class="card-text display-4" th:text="${savedJobsCount}">0</p>
+                <div class="col-md-4 mb-3">
+                    <div class="card stat-card text-white bg-success">
+                        <div class="card-body d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="stat-number" th:text="${savedJobsCount}">0</div>
+                                <div class="stat-label">Saved Jobs</div>
+                            </div>
+                            <i class="fas fa-bookmark stat-icon"></i>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="card text-white bg-info mb-3">
-                        <div class="card-body">
-                            <h5 class="card-title"><i class="fas fa-search"></i> Available Jobs</h5>
-                            <p class="card-text display-4" th:text="${totalJobsCount}">0</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <h4 class="mt-4">My Applied Jobs</h4>
-            <div class="table-responsive">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Job Title</th>
-                            <th>Company</th>
-                            <th>Applied Date</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="apply : ${appliedJobs}">
-                            <td th:text="${apply.job.jobTitle}">Job Title</td>
-                            <td th:text="${apply.job.jobCompany.name}">Company</td>
-                            <td th:text="${#temporals.format(apply.applyDate, 'yyyy-MM-dd')}">Date</td>
-                            <td><span class="badge badge-success">Applied</span></td>
-                        </tr>
-                        <tr th:if="${#lists.isEmpty(appliedJobs)}">
-                            <td colspan="4" class="text-center">No applications yet</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- For Recruiter -->
-        <div th:if="${isRecruiter}">
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="card text-white bg-primary mb-3">
-                        <div class="card-body">
-                            <h5 class="card-title"><i class="fas fa-briefcase"></i> Posted Jobs</h5>
-                            <p class="card-text display-4" th:text="${postedJobsCount}">0</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card text-white bg-warning mb-3">
-                        <div class="card-body">
-                            <h5 class="card-title"><i class="fas fa-users"></i> Total Applicants</h5>
-                            <p class="card-text display-4" th:text="${totalApplicants}">0</p>
+                <div class="col-md-4 mb-3">
+                    <div class="card stat-card text-white bg-info">
+                        <div class="card-body d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="stat-number" th:text="${totalJobsCount}">0</div>
+                                <div class="stat-label">Available Jobs</div>
+                            </div>
+                            <i class="fas fa-search stat-icon"></i>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="mt-4">
-                <a th:href="@{/jobs/new}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> Post New Job
+            <!-- Section Header -->
+            <div class="section-header mt-4">
+                <h4>My Applied Jobs</h4>
+                <a th:href="@{/jobs}" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Browse Jobs
                 </a>
             </div>
 
-            <h4 class="mt-4">My Posted Jobs</h4>
-            <div class="table-responsive">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Job Title</th>
-                            <th>Location</th>
-                            <th>Posted Date</th>
-                            <th>Applicants</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="job : ${postedJobs}">
-                            <td th:text="${job.jobTitle}">Job Title</td>
-                            <td th:text="${job.jobLocation?.city + ', ' + job.jobLocation?.state}">Location</td>
-                            <td th:text="${#temporals.format(job.postedDate, 'yyyy-MM-dd')}">Date</td>
-                            <td th:text="${job.applicants.size()}">0</td>
-                            <td>
-                                <a th:href="@{/jobs/{id}(id=${job.jobPostId})}" class="btn btn-sm btn-info">View</a>
-                                <a th:href="@{/jobs/{id}/applicants(id=${job.jobPostId})}"
-                                    class="btn btn-sm btn-secondary">Applicants</a>
-                            </td>
-                        </tr>
-                        <tr th:if="${#lists.isEmpty(postedJobs)}">
-                            <td colspan="5" class="text-center">No jobs posted yet</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <!-- Applied Job Cards -->
+            <div class="row">
+                <div class="col-12" th:if="${#lists.isEmpty(appliedJobs)}">
+                    <div class="empty-state">
+                        <i class="fas fa-file-alt d-block"></i>
+                        <h5>No applications yet</h5>
+                        <p>Browse available jobs and start applying today.</p>
+                        <a th:href="@{/jobs}" class="btn btn-primary mt-2">
+                            <i class="fas fa-search"></i> Browse Jobs
+                        </a>
+                    </div>
+                </div>
+
+                <div class="col-md-6" th:each="apply : ${appliedJobs}">
+                    <div class="card job-card">
+                        <div class="card-body">
+                            <h5 class="card-title" th:text="${apply.job.jobTitle}">Job Title</h5>
+                            <div class="job-info">
+                                <div>
+                                    <i class="fas fa-building"></i>
+                                    <span th:text="${apply.job.jobCompany?.name}">Company Name</span>
+                                </div>
+                                <div>
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span th:text="${(apply.job.jobLocation?.city != null ? apply.job.jobLocation.city : '') + (apply.job.jobLocation?.state != null ? ', ' + apply.job.jobLocation.state : '')}">Location</span>
+                                </div>
+                                <div>
+                                    <i class="fas fa-briefcase"></i>
+                                    <span th:text="${apply.job.jobType}">Full-time</span>
+                                </div>
+                                <div>
+                                    <i class="fas fa-money-bill"></i>
+                                    <span th:text="${apply.job.salary}">Salary</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="badge badge-success badge-applicants">
+                                    <i class="fas fa-check-circle"></i> Applied
+                                </span>
+                                <small class="text-muted ml-2" th:text="${#temporals.format(apply.applyDate, 'MMM dd, yyyy')}">Date</small>
+                            </div>
+                            <a th:href="@{/jobs/{id}(id=${apply.job.jobPostId})}" class="btn btn-sm btn-primary">View Details</a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <footer class="bg-dark text-white py-4 text-center">
-        <p>&copy; 2023 Job Portal. All rights reserved.</p>
-    </footer>
+        <footer class="bg-dark text-white py-4 text-center">
+            <p>&copy; 2023 Job Portal. All rights reserved.</p>
+        </footer>
+    </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>

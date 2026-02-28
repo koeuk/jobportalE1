@@ -8,83 +8,231 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        .login-container {
-            max-width: 400px;
-            margin: 50px auto;
+        html, body {
+            height: 100%;
+            margin: 0;
         }
 
-        .card {
+        .login-wrapper {
+            min-height: 100vh;
+            display: flex;
+        }
+
+        .login-left {
+            flex: 1;
+            background: linear-gradient(135deg, #1565C0 0%, #1976D2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .login-left-content {
+            max-width: 450px;
+        }
+
+        .login-left h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .login-left p {
+            font-size: 1.1rem;
+            opacity: 0.85;
+            line-height: 1.7;
+        }
+
+        .login-left .feature-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 30px;
+        }
+
+        .login-left .feature-list li {
+            padding: 10px 0;
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .login-left .feature-list li i {
+            margin-right: 12px;
+            color: #F5A623;
+        }
+
+        .login-right {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            background: #f8f9fa;
+        }
+
+        .login-form-container {
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .login-form-container .brand {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-form-container .brand a {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1565C0;
+            text-decoration: none;
+        }
+
+        .login-form-container .brand i {
+            color: #F5A623;
+        }
+
+        .login-form-container h3 {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .login-form-container .subtitle {
+            color: #6c757d;
+            margin-bottom: 30px;
+        }
+
+        .login-form-container .form-control {
+            padding: 12px 15px;
+            height: auto;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        .login-form-container .form-control:focus {
+            border-color: #1976D2;
+            box-shadow: 0 0 0 0.2rem rgba(25, 118, 210, 0.15);
+        }
+
+        .login-form-container .btn-primary {
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
             border: none;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-form-container .btn-primary:hover {
+            background: linear-gradient(135deg, #1565C0 0%, #1976D2 100%);
+        }
+
+        .login-form-container label {
+            font-weight: 500;
+            color: #495057;
+            margin-bottom: 6px;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+        }
+
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .divider span {
+            padding: 0 15px;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .login-left {
+                display: none;
+            }
+
+            .login-right {
+                padding: 30px 20px;
+            }
         }
     </style>
 </head>
 
 <body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" th:href="@{/}">
-                <i class="fas fa-briefcase"></i> Job Portal
-            </a>
+    <div class="login-wrapper">
+        <!-- Left Panel -->
+        <div class="login-left">
+            <div class="login-left-content">
+                <h1><i class="fas fa-briefcase"></i> Job Portal</h1>
+                <p>Your career journey starts here. Connect with top companies and find opportunities that match your skills.</p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check-circle"></i> Browse thousands of job openings</li>
+                    <li><i class="fas fa-check-circle"></i> Apply with just a few clicks</li>
+                    <li><i class="fas fa-check-circle"></i> Track your applications easily</li>
+                    <li><i class="fas fa-check-circle"></i> Get noticed by top employers</li>
+                </ul>
+            </div>
         </div>
-    </nav>
 
-    <div class="container">
-        <div class="login-container">
-            <div class="card">
-                <div class="card-body p-5">
-                    <h3 class="text-center mb-4">Login</h3>
+        <!-- Right Panel - Login Form -->
+        <div class="login-right">
+            <div class="login-form-container">
+                <div class="brand">
+                    <a th:href="@{/}"><i class="fas fa-briefcase"></i> Job Portal</a>
+                </div>
 
-                    <!-- Error Message -->
-                    <div th:if="${param.error}" class="alert alert-danger">
-                        <i class="fas fa-exclamation-circle"></i> Invalid email or password.
+                <h3>Welcome back</h3>
+                <p class="subtitle">Sign in to your account to continue</p>
+
+                <!-- Error Message -->
+                <div th:if="${param.error}" class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle"></i> Invalid email or password.
+                </div>
+
+                <!-- Logout Message -->
+                <div th:if="${param.logout}" class="alert alert-success">
+                    <i class="fas fa-check-circle"></i> You have been logged out.
+                </div>
+
+                <form th:action="@{/login}" method="post">
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" class="form-control"
+                            placeholder="Enter your email" required autofocus>
                     </div>
 
-                    <!-- Logout Message -->
-                    <div th:if="${param.logout}" class="alert alert-success">
-                        <i class="fas fa-check-circle"></i> You have been logged out.
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" class="form-control"
+                            placeholder="Enter your password" required>
                     </div>
 
-                    <form th:action="@{/login}" method="post">
-                        <div class="form-group">
-                            <label for="email">Email Address</label>
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text"><i class="fas fa-envelope"></i></span>
-                                </div>
-                                <input type="email" id="email" name="email" class="form-control" required autofocus>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="password">Password</label>
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                                </div>
-                                <input type="password" id="password" name="password" class="form-control" required>
-                            </div>
-                        </div>
-
-                        <div class="form-group form-check">
+                    <div class="form-group d-flex justify-content-between align-items-center">
+                        <div class="form-check">
                             <input type="checkbox" class="form-check-input" id="remember-me" name="remember-me">
                             <label class="form-check-label" for="remember-me">Remember me</label>
                         </div>
-
-                        <button type="submit" class="btn btn-primary btn-block">Login</button>
-                    </form>
-
-                    <div class="text-center mt-3">
-                        <p>Don't have an account? <a th:href="@{/register}">Register here</a></p>
                     </div>
+
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <i class="fas fa-sign-in-alt"></i> Sign In
+                    </button>
+                </form>
+
+                <div class="divider">
+                    <span>New here?</span>
                 </div>
+
+                <a th:href="@{/register}" class="btn btn-outline-secondary btn-block" style="border-radius: 8px; padding: 10px;">
+                    <i class="fas fa-user-plus"></i> Create an Account
+                </a>
             </div>
         </div>
     </div>
-
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>

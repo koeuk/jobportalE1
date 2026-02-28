@@ -1,6 +1,5 @@
 package com.jobportal.controller;
 
-import com.jobportal.dto.JobPostDto;
 import com.jobportal.dto.UserRegistrationDto;
 import com.jobportal.entity.*;
 import com.jobportal.repository.*;
@@ -15,6 +14,8 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import org.springframework.data.domain.PageRequest;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,12 +32,6 @@ public class MainController {
 
     @Autowired
     private JobPostActivityRepository jobPostActivityRepository;
-
-    @Autowired
-    private JobCompanyRepository jobCompanyRepository;
-
-    @Autowired
-    private JobLocationRepository jobLocationRepository;
 
     @Autowired
     private JobSeekerProfileRepository jobSeekerProfileRepository;
@@ -59,6 +54,18 @@ public class MainController {
     // Home Page
     @GetMapping("/")
     public String home() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && !auth.getName().equals("anonymousUser")) {
+            Optional<Users> userOpt = usersRepository.findByEmail(auth.getName());
+            if (userOpt.isPresent()) {
+                Users user = userOpt.get();
+                boolean isRecruiter = user.getUserType() != null &&
+                        user.getUserType().getUserTypeName().equals("Recruiter");
+                if (!isRecruiter) {
+                    return "redirect:/jobs";
+                }
+            }
+        }
         return "index";
     }
 
@@ -205,6 +212,18 @@ public class MainController {
                     .mapToInt(j -> j.getApplicants() != null ? j.getApplicants().size() : 0)
                     .sum();
             model.addAttribute("totalApplicants", totalApplicants);
+
+            // Admin stats
+            long totalUsers = usersRepository.count();
+            long totalJobs = jobPostActivityRepository.count();
+            long totalApplications = jobSeekerApplyRepository.count();
+            model.addAttribute("totalUsers", totalUsers);
+            model.addAttribute("totalJobs", totalJobs);
+            model.addAttribute("totalApplications", totalApplications);
+
+            // Recently applied (latest 5)
+            List<JobSeekerApply> recentApplications = jobSeekerApplyRepository.findAllByOrderByApplyDateDesc(PageRequest.of(0, 5));
+            model.addAttribute("recentApplications", recentApplications);
         } else {
             List<JobSeekerApply> appliedJobs = jobSeekerApplyRepository.findByUserUserAccountId(user.getUserId());
             List<JobSeekerSave> savedJobs = jobSeekerSaveRepository.findByUserUserAccountId(user.getUserId());
@@ -221,6 +240,7 @@ public class MainController {
 
     // Profile
     @GetMapping("/profile")
+    @Transactional(readOnly = true)
     public String profile(Model model) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
@@ -236,6 +256,7 @@ public class MainController {
 
         model.addAttribute("isRecruiter", isRecruiter);
         model.addAttribute("isJobSeeker", !isRecruiter);
+        model.addAttribute("userEmail", user.getEmail());
 
         if (isRecruiter) {
             Optional<RecruiterProfile> profile = recruiterProfileRepository.findById(user.getUserId());
@@ -246,137 +267,14 @@ public class MainController {
 
             List<Skills> skills = skillsRepository.findByJobSeekerProfileUserAccountId(user.getUserId());
             model.addAttribute("skills", skills);
+
+            List<JobSeekerApply> appliedJobs = jobSeekerApplyRepository.findByUserUserAccountId(user.getUserId());
+            List<JobSeekerSave> savedJobs = jobSeekerSaveRepository.findByUserUserAccountId(user.getUserId());
+            model.addAttribute("appliedJobs", appliedJobs);
+            model.addAttribute("savedJobs", savedJobs);
         }
 
         return "profile";
-    }
-
-    // Apply for Job
-    @PostMapping("/jobs/{id}/apply")
-    public String applyJob(@PathVariable Integer id) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = auth.getName();
-        Optional<Users> userOpt = usersRepository.findByEmail(email);
-
-        if (userOpt.isEmpty()) {
-            return "redirect:/login";
-        }
-
-        Users user = userOpt.get();
-        Optional<JobPostActivity> jobOpt = jobPostActivityRepository.findById(id);
-
-        if (jobOpt.isEmpty()) {
-            return "redirect:/jobs";
-        }
-
-        // Check if already applied
-        if (jobSeekerApplyRepository.existsByJobJobPostIdAndUserUserAccountId(id, user.getUserId())) {
-            return "redirect:/jobs/" + id + "?error=already-applied";
-        }
-
-        JobSeekerApply apply = new JobSeekerApply();
-        apply.setUser(jobSeekerProfileRepository.findById(user.getUserId()).orElse(null));
-        apply.setJob(jobOpt.get());
-        apply.setApplyDate(LocalDateTime.now());
-
-        jobSeekerApplyRepository.save(apply);
-
-        return "redirect:/jobs/" + id + "?applied=true";
-    }
-
-    // Save Job
-    @PostMapping("/jobs/{id}/save")
-    public String saveJob(@PathVariable Integer id) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = auth.getName();
-        Optional<Users> userOpt = usersRepository.findByEmail(email);
-
-        if (userOpt.isEmpty()) {
-            return "redirect:/login";
-        }
-
-        Users user = userOpt.get();
-        Optional<JobPostActivity> jobOpt = jobPostActivityRepository.findById(id);
-
-        if (jobOpt.isEmpty()) {
-            return "redirect:/jobs";
-        }
-
-        // Check if already saved
-        if (jobSeekerSaveRepository.existsByJobJobPostIdAndUserUserAccountId(id, user.getUserId())) {
-            return "redirect:/jobs/" + id + "?error=already-saved";
-        }
-
-        JobSeekerSave save = new JobSeekerSave();
-        save.setUser(jobSeekerProfileRepository.findById(user.getUserId()).orElse(null));
-        save.setJob(jobOpt.get());
-
-        jobSeekerSaveRepository.save(save);
-
-        return "redirect:/jobs/" + id + "?saved=true";
-    }
-
-    // Post New Job (Form)
-    @GetMapping("/jobs/new")
-    public String newJob(Model model) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = auth.getName();
-        Optional<Users> userOpt = usersRepository.findByEmail(email);
-
-        if (userOpt.isEmpty() || userOpt.get().getUserType() == null ||
-                !userOpt.get().getUserType().getUserTypeName().equals("Recruiter")) {
-            return "redirect:/login";
-        }
-
-        model.addAttribute("jobPostDto", new JobPostDto());
-        return "post-job";
-    }
-
-    // Post New Job (Submit)
-    @PostMapping("/jobs/new")
-    public String newJobSubmit(@Valid @ModelAttribute("jobPostDto") JobPostDto jobPostDto, BindingResult result, Model model) {
-        if (result.hasErrors()) {
-            return "post-job";
-        }
-
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = auth.getName();
-        Optional<Users> userOpt = usersRepository.findByEmail(email);
-
-        if (userOpt.isEmpty()) {
-            return "redirect:/login";
-        }
-
-        Users user = userOpt.get();
-
-        // Create or get company
-        JobCompany company = new JobCompany();
-        company.setName(jobPostDto.getCompanyName());
-        company.setLogo(jobPostDto.getCompanyLogo());
-        company = jobCompanyRepository.save(company);
-
-        // Create or get location
-        JobLocation location = new JobLocation();
-        location.setCity(jobPostDto.getCity());
-        location.setState(jobPostDto.getState());
-        location.setCountry(jobPostDto.getCountry());
-        location = jobLocationRepository.save(location);
-
-        // Create job post
-        JobPostActivity job = new JobPostActivity();
-        job.setJobTitle(jobPostDto.getJobTitle());
-        job.setDescriptionOfJob(jobPostDto.getDescriptionOfJob());
-        job.setJobType(jobPostDto.getJobType());
-        job.setSalary(jobPostDto.getSalary());
-        job.setRemote(jobPostDto.getRemote());
-        job.setPostedDate(LocalDateTime.now());
-        job.setJobCompany(company);
-        job.setJobLocation(location);
-        job.setPostedBy(user);
-
-        jobPostActivityRepository.save(job);
-
-        return "redirect:/dashboard";
     }
 
     // Update Profile
@@ -390,6 +288,7 @@ public class MainController {
                                 @RequestParam(required = false) String employmentType,
                                 @RequestParam(required = false) String workAuthorization,
                                 @RequestParam(required = false) String resume,
+                                @RequestParam(required = false) String newEmail,
                                 RedirectAttributes redirectAttributes) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
@@ -402,6 +301,17 @@ public class MainController {
         Users user = userOpt.get();
         boolean isRecruiter = user.getUserType() != null &&
                 user.getUserType().getUserTypeName().equals("Recruiter");
+
+        // Update email if changed
+        if (newEmail != null && !newEmail.isBlank() && !newEmail.equals(user.getEmail())) {
+            Optional<Users> existingUser = usersRepository.findByEmail(newEmail);
+            if (existingUser.isPresent()) {
+                redirectAttributes.addFlashAttribute("error", "Email is already in use by another account.");
+                return "redirect:/profile";
+            }
+            user.setEmail(newEmail);
+            usersRepository.save(user);
+        }
 
         if (isRecruiter) {
             Optional<RecruiterProfile> profileOpt = recruiterProfileRepository.findById(user.getUserId());
@@ -433,68 +343,5 @@ public class MainController {
 
         redirectAttributes.addFlashAttribute("success", "Profile updated successfully!");
         return "redirect:/profile";
-    }
-
-    // Add Skill
-    @PostMapping("/profile/skills/add")
-    public String addSkill(@RequestParam String skillName,
-                           @RequestParam(required = false) String experienceLevel,
-                           @RequestParam(required = false) String yearsOfExperience,
-                           RedirectAttributes redirectAttributes) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = auth.getName();
-        Optional<Users> userOpt = usersRepository.findByEmail(email);
-
-        if (userOpt.isEmpty()) {
-            return "redirect:/login";
-        }
-
-        Users user = userOpt.get();
-        Optional<JobSeekerProfile> profileOpt = jobSeekerProfileRepository.findById(user.getUserId());
-
-        if (profileOpt.isEmpty()) {
-            return "redirect:/profile";
-        }
-
-        Skills skill = new Skills();
-        skill.setName(skillName);
-        skill.setExperienceLevel(experienceLevel);
-        skill.setYearsOfExperience(yearsOfExperience);
-        skill.setJobSeekerProfile(profileOpt.get());
-        skillsRepository.save(skill);
-
-        redirectAttributes.addFlashAttribute("success", "Skill added successfully!");
-        return "redirect:/profile";
-    }
-
-    // View Applicants for a Job
-    @GetMapping("/jobs/{id}/applicants")
-    @Transactional(readOnly = true)
-    public String viewApplicants(@PathVariable Integer id, Model model) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String email = auth.getName();
-        Optional<Users> userOpt = usersRepository.findByEmail(email);
-
-        if (userOpt.isEmpty()) {
-            return "redirect:/login";
-        }
-
-        Optional<JobPostActivity> jobOpt = jobPostActivityRepository.findById(id);
-        if (jobOpt.isEmpty()) {
-            return "redirect:/dashboard";
-        }
-
-        JobPostActivity job = jobOpt.get();
-
-        // Verify the current user is the one who posted this job
-        if (!job.getPostedBy().getUserId().equals(userOpt.get().getUserId())) {
-            return "redirect:/dashboard";
-        }
-
-        List<JobSeekerApply> applicants = jobSeekerApplyRepository.findByJobJobPostId(id);
-        model.addAttribute("job", job);
-        model.addAttribute("applicants", applicants);
-
-        return "applicants";
     }
 }

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${user.userId != null} ? 'Edit User' : 'Add User'">User Form - Job Portal</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+
+<body>
+    <div th:replace="fragments/sidebar :: sidebar('users')"></div>
+
+    <div class="main-content">
+        <div class="container-fluid">
+            <div class="mb-4">
+                <a th:href="@{/admin/users}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-arrow-left"></i> Back to Users
+                </a>
+            </div>
+
+            <h2 th:text="${user.userId != null} ? 'Edit User' : 'Add User'"></h2>
+
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
+                <span th:text="${error}"></span>
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-body">
+                    <!-- Create form -->
+                    <form th:if="${user.userId == null}" th:action="@{/admin/users}" method="post">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="firstName">First Name</label>
+                                    <input type="text" class="form-control" id="firstName" name="firstName" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="lastName">Last Name</label>
+                                    <input type="text" class="form-control" id="lastName" name="lastName" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" class="form-control" id="email" name="email"
+                                   th:value="${user.email}" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="password">Password</label>
+                                    <input type="password" class="form-control" id="password" name="password" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="confirmPassword">Confirm Password</label>
+                                    <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="userTypeId">User Type</label>
+                            <select class="form-control" id="userTypeId" name="userTypeId" required>
+                                <option value="">-- Select Type --</option>
+                                <option th:each="type : ${userTypes}"
+                                        th:value="${type.userTypeId}"
+                                        th:text="${type.userTypeName}"></option>
+                            </select>
+                        </div>
+                        <div class="form-group form-check">
+                            <input type="checkbox" class="form-check-input" id="isActive" name="isActive" value="true" checked>
+                            <label class="form-check-label" for="isActive">Active</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Create User
+                        </button>
+                    </form>
+
+                    <!-- Edit form -->
+                    <form th:if="${user.userId != null}" th:action="@{/admin/users/{id}/edit(id=${user.userId})}" method="post">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="firstNameEdit">First Name</label>
+                                    <input type="text" class="form-control" id="firstNameEdit" name="firstName"
+                                           th:value="${firstName}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="lastNameEdit">Last Name</label>
+                                    <input type="text" class="form-control" id="lastNameEdit" name="lastName"
+                                           th:value="${lastName}">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="emailEdit">Email</label>
+                            <input type="email" class="form-control" id="emailEdit" name="email"
+                                   th:value="${user.email}" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="newPassword">New Password <small class="text-muted">(leave blank to keep current)</small></label>
+                                    <input type="password" class="form-control" id="newPassword" name="newPassword">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="confirmPasswordEdit">Confirm Password</label>
+                                    <input type="password" class="form-control" id="confirmPasswordEdit" name="confirmPassword">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="userTypeIdEdit">User Type</label>
+                            <select class="form-control" id="userTypeIdEdit" name="userTypeId" required>
+                                <option value="">-- Select Type --</option>
+                                <option th:each="type : ${userTypes}"
+                                        th:value="${type.userTypeId}"
+                                        th:selected="${user.userType != null and user.userType.userTypeId == type.userTypeId}"
+                                        th:text="${type.userTypeName}"></option>
+                            </select>
+                        </div>
+                        <div class="form-group form-check">
+                            <input type="checkbox" class="form-check-input" id="isActiveEdit" name="isActive" value="true"
+                                   th:checked="${user.isActive}">
+                            <label class="form-check-label" for="isActiveEdit">Active</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Update User
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

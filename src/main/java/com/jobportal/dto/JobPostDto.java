@@ -2,6 +2,7 @@ package com.jobportal.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
+import org.springframework.web.multipart.MultipartFile;
 
 @Data
 public class JobPostDto {
@@ -22,7 +23,7 @@ public class JobPostDto {
     @NotBlank(message = "Company name is required")
     private String companyName;
 
-    private String companyLogo;
+    private MultipartFile companyLogo;
 
     @NotBlank(message = "City is required")
     private String city;
