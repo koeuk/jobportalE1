@@ -28,6 +28,8 @@ public class SecurityConfig {
                                                 .requestMatchers("/jobs/{id}/apply", "/jobs/{id}/save",
                                                                 "/profile/skills/add")
                                                 .hasRole("JOB_SEEKER")
+                                                .requestMatchers("/jobs/*/apply")
+                                                .hasRole("JOB_SEEKER")
                                                 .requestMatchers("/jobs/new", "/jobs/{id}/applicants",
                                                                 "/jobs/{id}/edit", "/jobs/{id}/delete",
                                                                 "/applications", "/applications/{id}")

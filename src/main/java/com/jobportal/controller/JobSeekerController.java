@@ -3,14 +3,22 @@ package com.jobportal.controller;
 import com.jobportal.entity.*;
 import com.jobportal.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.UUID;
 
 @Controller
 public class JobSeekerController {
@@ -33,9 +41,12 @@ public class JobSeekerController {
     @Autowired
     private SkillsRepository skillsRepository;
 
-    // Apply for Job
-    @PostMapping("/jobs/{id}/apply")
-    public String applyJob(@PathVariable Integer id) {
+    @Value("${upload.dir:uploads}")
+    private String uploadDir;
+
+    // Apply for Job - Show Form
+    @GetMapping("/jobs/{id}/apply")
+    public String applyJobForm(@PathVariable Integer id, Model model) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String email = auth.getName();
         Optional<Users> userOpt = usersRepository.findByEmail(email);
@@ -56,10 +67,62 @@ public class JobSeekerController {
             return "redirect:/jobs/" + id + "?error=already-applied";
         }
 
+        model.addAttribute("job", jobOpt.get());
+        return "apply-job";
+    }
+
+    // Apply for Job - Submit
+    @PostMapping("/jobs/{id}/apply")
+    public String applyJob(@PathVariable Integer id,
+                           @RequestParam(required = false) String coverLetter,
+                           @RequestParam(required = false) MultipartFile cvFile,
+                           RedirectAttributes redirectAttributes) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String email = auth.getName();
+        Optional<Users> userOpt = usersRepository.findByEmail(email);
+
+        if (userOpt.isEmpty()) {
+            return "redirect:/login";
+        }
+
+        Users user = userOpt.get();
+        Optional<JobPostActivity> jobOpt = jobPostActivityRepository.findById(id);
+
+        if (jobOpt.isEmpty()) {
+            return "redirect:/jobs";
+        }
+
+        // Check if already applied
+        if (jobSeekerApplyRepository.existsByJobJobPostIdAndUserUserAccountId(id, user.getUserId())) {
+            return "redirect:/jobs/" + id + "?error=already-applied";
+        }
+
+        // Handle CV file upload
+        JobSeekerProfile profile = jobSeekerProfileRepository.findById(user.getUserId()).orElse(null);
+        if (cvFile != null && !cvFile.isEmpty()) {
+            try {
+                Path uploadPath = Paths.get(uploadDir, "cv");
+                Files.createDirectories(uploadPath);
+                String fileName = UUID.randomUUID() + "_" + cvFile.getOriginalFilename();
+                Path filePath = uploadPath.resolve(fileName);
+                Files.copy(cvFile.getInputStream(), filePath);
+                String cvUrl = "/uploads/cv/" + fileName;
+                // Update profile resume
+                if (profile != null) {
+                    profile.setResume(cvUrl);
+                    jobSeekerProfileRepository.save(profile);
+                }
+            } catch (IOException e) {
+                redirectAttributes.addFlashAttribute("error", "Failed to upload CV. Please try again.");
+                return "redirect:/jobs/" + id + "/apply";
+            }
+        }
+
         JobSeekerApply apply = new JobSeekerApply();
-        apply.setUser(jobSeekerProfileRepository.findById(user.getUserId()).orElse(null));
+        apply.setUser(profile);
         apply.setJob(jobOpt.get());
         apply.setApplyDate(LocalDateTime.now());
+        apply.setCoverLetter(coverLetter);
 
         jobSeekerApplyRepository.save(apply);
 

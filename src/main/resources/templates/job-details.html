@@ -24,6 +24,9 @@
     <!-- Recruiter content with sidebar layout -->
     <div sec:authorize="hasRole('RECRUITER')" class="main-content">
         <div class="container py-5">
+            <a th:href="@{/jobs}" class="btn btn-outline-secondary mb-4">
+                <i class="fas fa-arrow-left"></i> Back to Jobs
+            </a>
             <div class="row">
                 <div class="col-md-8">
                     <div class="card">
@@ -104,6 +107,9 @@
     <!-- Job Seeker and Guest content (no sidebar) -->
     <div sec:authorize="!hasRole('RECRUITER')" class="page-wrapper">
         <div class="container py-5">
+            <a th:href="@{/jobs}" class="btn btn-outline-secondary mb-4">
+                <i class="fas fa-arrow-left"></i> Back to Jobs
+            </a>
             <div class="row">
                 <div class="col-md-8">
                     <div class="card">
@@ -144,11 +150,9 @@
                             <p th:text="${job.descriptionOfJob}">Job description goes here...</p>
 
                             <div class="mt-4" sec:authorize="hasRole('JOB_SEEKER')">
-                                <form th:action="@{/jobs/{id}/apply(id=${job.jobPostId})}" method="post" class="d-inline">
-                                    <button type="submit" class="btn btn-primary btn-lg">
-                                        <i class="fas fa-paper-plane"></i> Apply Now
-                                    </button>
-                                </form>
+                                <a th:href="@{/jobs/{id}/apply(id=${job.jobPostId})}" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-paper-plane"></i> Apply Now
+                                </a>
                                 <form th:action="@{/jobs/{id}/save(id=${job.jobPostId})}" method="post" class="d-inline">
                                     <button type="submit" class="btn btn-outline-secondary btn-lg">
                                         <i class="fas fa-bookmark"></i> Save Job
