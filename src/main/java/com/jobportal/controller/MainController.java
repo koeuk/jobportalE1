@@ -53,19 +53,9 @@ public class MainController {
 
     // Home Page
     @GetMapping("/")
-    public String home() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.isAuthenticated() && !auth.getName().equals("anonymousUser")) {
-            Optional<Users> userOpt = usersRepository.findByEmail(auth.getName());
-            if (userOpt.isPresent()) {
-                Users user = userOpt.get();
-                boolean isRecruiter = user.getUserType() != null &&
-                        user.getUserType().getUserTypeName().equals("Recruiter");
-                if (!isRecruiter) {
-                    return "redirect:/jobs";
-                }
-            }
-        }
+    public String home(Model model) {
+        List<JobPostActivity> recentJobs = jobPostActivityRepository.findAllByOrderByPostedDateDesc(PageRequest.of(0, 6));
+        model.addAttribute("recentJobs", recentJobs);
         return "index";
     }
 

@@ -121,25 +121,81 @@
             <div class="row">
                 <div class="col-md-4 text-center">
                     <div class="feature-box">
-                        <i class="fas fa-briefcase fa-3x text-primary mb-3"></i>
+                        <i class="fas fa-briefcase fa-3x mb-3" style="color: #F5A623;"></i>
                         <h4>Browse Jobs</h4>
                         <p>Search thousands of job openings from top companies</p>
                     </div>
                 </div>
                 <div class="col-md-4 text-center">
                     <div class="feature-box">
-                        <i class="fas fa-file-alt fa-3x text-primary mb-3"></i>
+                        <i class="fas fa-file-alt fa-3x mb-3" style="color: #F5A623;"></i>
                         <h4>Easy Apply</h4>
                         <p>Apply to jobs with just a few clicks using your profile</p>
                     </div>
                 </div>
                 <div class="col-md-4 text-center">
                     <div class="feature-box">
-                        <i class="fas fa-user-tie fa-3x text-primary mb-3"></i>
+                        <i class="fas fa-user-tie fa-3x mb-3" style="color: #F5A623;"></i>
                         <h4>For Employers</h4>
                         <p>Post jobs and find the perfect candidates for your company</p>
                     </div>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Recent Jobs Section -->
+    <section class="py-5" th:if="${recentJobs != null and !recentJobs.isEmpty()}" style="background: #f0f6ff;">
+        <div class="container">
+            <div class="text-center mb-4">
+                <h2 style="font-weight: 700; color: #1565C0;">Recent Job Openings</h2>
+                <p class="text-muted">Explore the latest opportunities from top companies</p>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-4 col-md-6 mb-4" th:each="job : ${recentJobs}">
+                    <div class="card h-100" style="border: none; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); transition: transform 0.2s, box-shadow 0.2s;">
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex align-items-center mb-3">
+                                <div style="width: 44px; height: 44px; border-radius: 10px; background: #e3f0ff; display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0;">
+                                    <img th:if="${job.jobCompany?.logo != null}" th:src="${job.jobCompany.logo}" alt="Logo" style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px;">
+                                    <i th:if="${job.jobCompany?.logo == null}" class="fas fa-building" style="color: #1976D2; font-size: 1.1rem;"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0" style="font-weight: 700; color: #1f2937;">
+                                        <a th:href="@{/jobs/{id}(id=${job.jobPostId})}" th:text="${job.jobTitle}" style="color: #1f2937; text-decoration: none;">Job Title</a>
+                                    </h6>
+                                    <small style="color: #1976D2; font-weight: 500;" th:text="${job.jobCompany?.name}">Company</small>
+                                </div>
+                            </div>
+                            <div style="font-size: 0.88rem; color: #6b7280; line-height: 1.8;">
+                                <div>
+                                    <i class="fas fa-map-marker-alt" style="width: 16px; color: #F5A623;"></i>
+                                    <span th:text="${(job.jobLocation?.city ?: 'Remote') + (job.jobLocation?.state != null ? ', ' + job.jobLocation.state : '')}">Location</span>
+                                </div>
+                                <div>
+                                    <i class="fas fa-briefcase" style="width: 16px; color: #F5A623;"></i>
+                                    <span th:text="${job.jobType ?: 'Full-time'}">Full-time</span>
+                                </div>
+                                <div>
+                                    <i class="fas fa-dollar-sign" style="width: 16px; color: #F5A623;"></i>
+                                    <span th:text="${job.salary ?: 'Negotiable'}">Salary</span>
+                                </div>
+                            </div>
+                            <div class="mt-auto pt-3">
+                                <a th:href="@{/jobs/{id}(id=${job.jobPostId})}" class="btn btn-sm btn-block" style="background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%); color: #fff; border-radius: 8px; font-weight: 600;">
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-3">
+                <a th:href="@{/jobs}" class="btn btn-lg" style="background: #F5A623; color: #fff; border-radius: 10px; font-weight: 600; padding: 12px 40px;">
+                    See More Jobs <i class="fas fa-arrow-right ml-2"></i>
+                </a>
             </div>
         </div>
     </section>
